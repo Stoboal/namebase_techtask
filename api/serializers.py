@@ -31,4 +31,4 @@ class FinalAnswerSerializer(serializers.Serializer):
 
 class PopularNameSerializer(serializers.Serializer):
     name = serializers.CharField()
-    frequency = serializers.IntegerField()
+    frequency = serializers.FloatField()

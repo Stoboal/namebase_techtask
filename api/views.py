@@ -3,6 +3,8 @@ from datetime import timedelta
 
 import requests
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -123,6 +125,24 @@ def create_or_update_country_and_probability_objects(name_object: UniqueName, da
 
 
 class NameStatsView(APIView):
+    @extend_schema(
+        summary="Get name statistics",
+        description="Get statistics for a given name by country",
+        parameters=[
+            OpenApiParameter(
+                name='name',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description='Name to get statistics for.'
+            )
+        ],
+        responses={
+            200: FinalAnswerSerializer,
+            400: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
+        }
+    )
     def get(self, request, *args, **kwargs):
         name_param = request.query_params.get('name')
         if not name_param:
@@ -167,6 +187,24 @@ class NameStatsView(APIView):
 
 
 class PopularNamesByCountryView(APIView):
+    @extend_schema(
+        summary="Get popular names by country",
+        description="Returns the top 5 most popular names for a given country code.",
+        parameters=[
+            OpenApiParameter(
+                name='country',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description='Country code to get popular names for.'
+            )
+        ],
+        responses={
+            200: PopularNameSerializer(many=True),
+            400: OpenApiTypes.OBJECT,
+            404: OpenApiTypes.OBJECT,
+        }
+    )
     def get(self, request, *args, **kwargs):
         country_code = request.query_params.get('country')
 

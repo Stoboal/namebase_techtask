@@ -29,6 +29,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'api',
     'rest_framework',
+    'drf_spectacular',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -169,6 +170,7 @@ LOGGING = {
 
 # REST
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
@@ -182,4 +184,12 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "user": "60/min",
     },
+}
+
+# Spectacular
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'NameBase',
+    'DESCRIPTION': 'API for predicting nationality by name and finding popular names by country.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
