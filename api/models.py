@@ -15,13 +15,13 @@ class Country(models.Model):
     code = models.CharField(primary_key=True, max_length=3)
 
     #names
-    name_common = models.CharField(max_length=100)
-    name_official = models.CharField(max_length=200)
+    name_common = models.CharField(max_length=256)
+    name_official = models.CharField(max_length=512)
     possible_names = models.JSONField(default=list, blank=True)
 
     #geography
-    region = models.CharField(max_length=100, blank=True)
-    capital_name = models.CharField(max_length=100, blank=True)
+    region = models.CharField(max_length=256, blank=True)
+    capital_name = models.CharField(max_length=256, blank=True)
     capital_latitude = models.FloatField(null=True, blank=True)
     capital_longitude = models.FloatField(null=True, blank=True)
 
@@ -34,7 +34,7 @@ class Country(models.Model):
     #flags and coat of arms
     flag_png_url = models.URLField(max_length=512, null=True, blank=True)
     flag_svg_url = models.URLField(max_length=512, null=True, blank=True)
-    flag_alt_text = models.CharField(max_length=200, null=True, blank=True)
+    flag_alt_text = models.CharField(max_length=2000, null=True, blank=True)
     coat_of_arms_png_url = models.URLField(max_length=512, null=True, blank=True)
     coat_of_arms_svg_url = models.URLField(max_length=512, null=True, blank=True)
 
