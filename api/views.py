@@ -6,20 +6,21 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .models import UniqueName, Country, NameCountryProbability
-from .serializers import CountrySerializer, NameCountryProbabilitySerializer, FinalAnswerSerializer
+from .serializers import CountrySerializer, FinalAnswerSerializer, PopularNameSerializer
 from datetime import timedelta
 from django.utils import timezone
 
 
 logger = logging.getLogger(__name__)
-
+nationalize_url = f'https://api.nationalize.io/?name='
+restcountries_url = f'https://restcountries.com/v3.1/alpha/'
 
 def parse_name_data(name: str) -> dict or None:
     """
     Parsing name data from nationalize API
     """
     try:
-        response = requests.get(f"https://api.nationalize.io/?name={name}")
+        response = requests.get(f'{nationalize_url}{name}')
         response.raise_for_status()
         return response.json()
     except requests.exceptions.Timeout:
@@ -41,7 +42,7 @@ def parse_country_data(code: str) -> dict or None:
     Parsing country data from restcountries API
     """
     try:
-        response = requests.get(f"https://restcountries.com/v3.1/alpha/{code}")
+        response = requests.get(f'{restcountries_url}{code}')
         response.raise_for_status()
 
         raw_data = response.json()[0]
@@ -91,7 +92,6 @@ def create_or_update_country_and_probability_objects(name_object: UniqueName, da
         # Getting or creating a country object:
         try:
             country_object = Country.objects.get(code=country_code)
-
         except Country.DoesNotExist:
             country_data = parse_country_data(country_code)
             if not country_data:
@@ -121,13 +121,10 @@ def create_or_update_country_and_probability_objects(name_object: UniqueName, da
 
 class NameStatsView(APIView):
     def get(self, request, *args, **kwargs):
-        name_param = kwargs.get('name')
+        name_param = request.query_params.get('name')
         if not name_param:
             logger.error('Name parameter is missing')
-            return Response(
-                {'error': 'Name parameter is missing'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': 'Name parameter is missing'},status=status.HTTP_400_BAD_REQUEST)
 
         name_object = UniqueName.objects.filter(name=name_param).first()
         if name_object:
@@ -141,10 +138,7 @@ class NameStatsView(APIView):
             else:
                 nationalize_data = parse_name_data(name_param)
                 if not nationalize_data:
-                    return Response(
-                        {'error': 'Nationalize API error'},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+                    return Response({'error': 'Nationalize API error'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 create_or_update_country_and_probability_objects(name_object, nationalize_data)
 
         # If no name data in base
@@ -164,7 +158,44 @@ class NameStatsView(APIView):
             'country_predictions': probabilities
         }
         final_serializer = FinalAnswerSerializer(instance=final_data)
-        # final_serializer.is_valid(raise_exception=True)
 
         logger.info(f'Answer for {name_param} returned successfully')
         return Response(final_serializer.data, status=status.HTTP_200_OK)
+
+
+class PopularNamesByCountryView(APIView):
+    def get(self, request, *args, **kwargs):
+        country_code = request.query_params.get('country')
+
+        if not country_code:
+            logger.error('Country code parameter is missing')
+            return Response({'error': 'Country code parameter is missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            country_object = Country.objects.get(code=country_code)
+
+        except Country.DoesNotExist:
+            logger.error('Country with such code does not exist in database')
+            return Response(
+                {'error': 'Country with such code does not exist in database'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        names_qs = UniqueName.objects.filter(country_probabilities__country=country_object).order_by('-request_count')
+        if not names_qs.exists():
+            logger.info(f'No names found for {country_code}')
+            return Response({'error': f'No names found for {country_code}'}, status=status.HTTP_404_NOT_FOUND)
+
+        else:
+            final_data = []
+            for name_object in names_qs:
+                final_data.append({
+                    'name': name_object.name,
+                    'frequency': name_object.request_count
+                })
+
+            serializer = PopularNameSerializer(data=final_data, many=True)
+            if serializer.is_valid(raise_exception=True):
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Unexpected error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
