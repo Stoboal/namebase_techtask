@@ -8,11 +8,11 @@ The API also provides an endpoint to retrieve a list of the most frequently requ
 
 ## Tech Stack
 
-* **Language:** Python 3.12+
-* **Framework:** Django, Django REST Framework
-* **Database:** PostgreSQL
-* **Containerization:** Docker, Docker Compose
-* **Linting/Formatting:** Ruff
+* **Language:** Python 3.12
+* **Framework:** Django 5.2.1, Django REST Framework 3.16
+* **Database:** PostgreSQL 15
+* **Containerization:** Docker 26.1, Docker Compose 2.27
+* **Linting/Formatting:** Ruff 0.11
 * **API Documentation:** drf-spectacular (Swagger UI & ReDoc)
 * **Authentication:** Token Authentication (DRF)
 
@@ -20,33 +20,32 @@ The API also provides an endpoint to retrieve a list of the most frequently requ
 
 ### Prerequisites
 
-* Docker (version X.Y+)
-* Docker Compose (version X.Y+)
+* Docker (version 26.1)
+* Docker Compose (version 2.27)
 
 ### Steps to Run
 
 1.  **Clone the repository:**
     ```bash
-    git clone <YOUR_REPOSITORY_URL>
+    git clone https://github.com/Stoboal/namebase_techtask.git
     cd <your_project_folder_name>
     ```
 
 2.  **Create and configure the `.env` file:**
-    In the project's root directory, create a file named `.env`. You can copy `example.env` (if you create one) or fill it manually with the following variables:
-
+    In the project's root directory, create a file named `.env`. You can copy variables from below:
     ```env
     # Django settings
-    SECRET_KEY=your_strong_and_unique_secret_key_here
+    DJANGO_SECRET_KEY=secret_key
     DEBUG=True
 
     # PostgreSQL settings
-    POSTGRES_DB=name_origin_db
-    POSTGRES_USER=db_user
-    POSTGRES_PASSWORD=supersecretpassword
+    DB_NAME=name_origin_db
+    DB_USER=db_user
+    DB_PASS=complexpassword
     
     # Database connection for Django (inside Docker)
-    DATABASE_HOST=db
-    DATABASE_PORT=5432
+    DB_HOST=db
+    DB_PORT=5432
     ```
 
 3.  **Build and run Docker containers:**
@@ -112,3 +111,21 @@ Full interactive API documentation is available via Swagger UI and ReDoc (see "A
 The API uses Token Authentication (`TokenAuthentication` from Django REST Framework).
 
 To access protected endpoints, the token must be included in the `Authorization` header:
+* **`Authorization: Token <YOUR_API_TOKEN>`**
+
+To obtain a token follow the next steps:
+1.  Enter the Django shell: `docker-compose exec web python manage.py shell`
+2.  Execute the following commands:
+    ```python
+    from django.contrib.auth.models import User
+    from rest_framework.authtoken.models import Token
+    user = User.objects.get(username='your_username')
+    token, created = Token.objects.get_or_create(user=user)
+    print(token.key)
+    ```
+
+## Running Tests
+
+To run the unit tests, execute the following command:
+```bash
+docker-compose exec web python manage.py test
