@@ -1,19 +1,22 @@
-import requests
 import logging
-
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-
-from .models import UniqueName, Country, NameCountryProbability
-from .serializers import CountrySerializer, FinalAnswerSerializer, PopularNameSerializer
 from datetime import timedelta
-from django.utils import timezone
 
+import requests
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Country, NameCountryProbability, UniqueName
+from .serializers import (
+    CountrySerializer,
+    FinalAnswerSerializer,
+    PopularNameSerializer,
+)
 
 logger = logging.getLogger(__name__)
-nationalize_url = f'https://api.nationalize.io/?name='
-restcountries_url = f'https://restcountries.com/v3.1/alpha/'
+nationalize_url = 'https://api.nationalize.io/?name='
+restcountries_url = 'https://restcountries.com/v3.1/alpha/'
 
 def parse_name_data(name: str) -> dict or None:
     """

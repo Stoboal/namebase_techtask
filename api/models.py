@@ -13,7 +13,6 @@ class UniqueName(models.Model):
 
 class Country(models.Model):
     code = models.CharField(primary_key=True, max_length=3)
-    associated_names = models.ManyToManyField('UniqueName', through='NameCountryProbability')
 
     #names
     name_common = models.CharField(max_length=256)
